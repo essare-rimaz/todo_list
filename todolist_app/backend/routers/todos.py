@@ -12,10 +12,11 @@ router = APIRouter(
     prefix="",
 )
 
-
+#TODO what happens when I add a parameter which is not specified e.g. project_vibe = cool?
 class ItemCreate(BaseModel):
     name: str
     description: str|None = None
+    project_id: int|None = None
 
 class ItemPatch(BaseModel):
     name: str|None = None
@@ -25,6 +26,7 @@ class ItemCreateResponse(BaseModel):
     name: str
     description: str|None
     id: int
+    project_id: int|None
 
     class Config:
         orm_mode: True
@@ -40,13 +42,28 @@ def post_todo_item(
     '''
     Create a TodoItem with an optional description
     '''
-    db_item = models.TodoItem(name=item.name, description=item.description, user_id_fk=user.id)
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
+    project_belongs_to_user = db.query(models.Project).filter(models.Project.project_id == item.project_id, models.Project.user_id_fk == user.id).first()
+    if (item.project_id is None) or ((isinstance(item.project_id, int)) and project_belongs_to_user):
+    #if project_id_exists:
+        db_item = models.TodoItem(name=item.name, description=item.description, project_id=item.project_id, user_id_fk=user.id)
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item)
+
+    elif not project_belongs_to_user:
+            raise HTTPException(
+        status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        detail="This project_id does not exist for this user"
+    )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="did not expect this to happen"
+    )
 
     return db_item
 
+#TODO when is it 200 or 204?
 @router.get("/todos", tags=["todos"], status_code=status.HTTP_200_OK)
 def get_todo_item(
     db: Session = Depends(get_db),
@@ -74,7 +91,11 @@ def delete_todo_item(
     '''
     Delete given TodoItem
     '''
-    record = db.query(models.TodoItem).filter(models.TodoItem.id == item_id).first()
+    record = db.query(models.TodoItem).filter(
+        models.TodoItem.id == item_id, 
+        models.TodoItem.user_id_fk == user.id
+    ).first()
+
     if not record:
         raise HTTPException(status_code=404, detail="Item not found")
     

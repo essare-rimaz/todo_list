@@ -26,6 +26,8 @@ class TodoItem(Base):
     users: Mapped["User"] = relationship(back_populates="todo_items")
     name: Mapped[str] = mapped_column(String(256), nullable=False)
     description: Mapped[str] = mapped_column(String(256), nullable=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("project.project_id", ondelete="CASCADE"), nullable=True)
+    projects: Mapped["Project"] = relationship(back_populates="todo_items")
 
 ''' optional for debugging
     def __repr__(self) -> str:
@@ -40,6 +42,19 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
 
     todo_items: Mapped[List["TodoItem"]] = relationship(back_populates="users", cascade="all, delete")
+    projects: Mapped[List["Project"]] = relationship(back_populates="users", cascade="all, delete")
+
 
     def set_password(self, password):
         self.hashed_password = pwd_context.hash(password)
+
+class Project(Base):
+    __tablename__= 'project'
+
+    project_id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True, nullable=False, autoincrement=True)
+    project_name: Mapped[str] = mapped_column(String(256), nullable=False)
+
+    todo_items: Mapped[List["TodoItem"]] = relationship(back_populates="projects", cascade="all, delete")
+    
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    users: Mapped["User"] = relationship(back_populates="projects")
