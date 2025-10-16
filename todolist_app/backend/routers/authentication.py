@@ -80,7 +80,7 @@ router = APIRouter(
     prefix="",
 )
 
-@router.post("/token")
+@router.post("/token", tags=["auth"])
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db),
