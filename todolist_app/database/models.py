@@ -38,7 +38,7 @@ class User(Base):
     __tablename__= 'user'
 
     id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True, nullable=False, autoincrement=True)
-    email: Mapped[str] = mapped_column(String(256), nullable=False)
+    email: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
 
     todo_items: Mapped[List["TodoItem"]] = relationship(back_populates="users", cascade="all, delete")
