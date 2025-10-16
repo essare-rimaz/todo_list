@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import todos, users, authentication, projects
+from .routers import todos, users, authentication, projects, owes
 
 #models.Base.metadata.create_all(engine)
 
@@ -25,3 +25,4 @@ app.include_router(todos.router)
 app.include_router(users.router)
 app.include_router(authentication.router)
 app.include_router(projects.router)
+app.include_router(owes.router)

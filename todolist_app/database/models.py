@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped
-from sqlalchemy import String, Integer
+from sqlalchemy import String, Integer, Date
 from sqlalchemy.orm import mapped_column
 from .connectivity import Base
 from sqlalchemy import Identity
@@ -7,7 +7,8 @@ from passlib.context import CryptContext
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from typing import List
-
+from datetime import date
+from pydantic_extra_types.currency_code import ISO4217
 
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -43,6 +44,7 @@ class User(Base):
 
     todo_items: Mapped[List["TodoItem"]] = relationship(back_populates="users", cascade="all, delete")
     projects: Mapped[List["Project"]] = relationship(back_populates="users", cascade="all, delete")
+    owes: Mapped[List["Owe"]] = relationship(back_populates="users", cascade="all, delete")
 
 
     def set_password(self, password):
@@ -58,3 +60,19 @@ class Project(Base):
     
     user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
     users: Mapped["User"] = relationship(back_populates="projects")
+
+
+class Owe(Base):
+    __tablename__= 'owe'
+
+    owe_id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True, nullable=False, autoincrement=True)
+    owe_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    who_owes: Mapped[str] = mapped_column(String(256), nullable=False)
+    owe_deadline: Mapped[date] = mapped_column((Date), nullable=True)
+    how_much: Mapped[int] = mapped_column(Integer, nullable=False)
+    #TODO can be turned to ISO4217
+    currency: Mapped[str] = mapped_column(String(256), nullable=False)
+
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    users: Mapped["User"] = relationship(back_populates="owes")
+
