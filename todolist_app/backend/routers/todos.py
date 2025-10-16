@@ -1,36 +1,16 @@
 from fastapi import Depends, APIRouter, status, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
 from ..dependencies import get_db
 from .authentication import get_current_user
 from ...database import models
+from ..schemas.todos import ItemCreate, ItemPatch, ItemCreateResponse
 
 router = APIRouter(
     prefix="",
 )
-
-#TODO what happens when I add a parameter which is not specified e.g. project_vibe = cool?
-class ItemCreate(BaseModel):
-    name: str
-    description: str|None = None
-    project_id: int|None = None
-
-class ItemPatch(BaseModel):
-    name: str|None = None
-    description: str|None = None
-
-class ItemCreateResponse(BaseModel):
-    name: str
-    description: str|None
-    id: int
-    project_id: int|None
-
-    class Config:
-        orm_mode: True
-
 
 @router.post("/todos", tags=["todos"], status_code=status.HTTP_201_CREATED, response_model=ItemCreateResponse)
 def post_todo_item(
