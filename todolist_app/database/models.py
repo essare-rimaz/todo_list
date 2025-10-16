@@ -10,8 +10,6 @@ from typing import List
 from datetime import date
 from pydantic_extra_types.currency_code import ISO4217
 from dateutil.relativedelta import relativedelta
-#TODO user_id_fk should not be nullable=True in all the tables
-#TODO transform all of this into a SQLscript
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -48,6 +46,7 @@ class User(Base):
     projects: Mapped[List["Project"]] = relationship(back_populates="users", cascade="all, delete")
     owes: Mapped[List["Owe"]] = relationship(back_populates="users", cascade="all, delete")
     inventories: Mapped[List["Inventory"]] = relationship(back_populates="users", cascade="all, delete")
+    expenses: Mapped[List["Expense"]] = relationship(back_populates="users", cascade="all, delete")
 
 
     def set_password(self, password):
@@ -107,3 +106,16 @@ class Inventory(Base):
     
     user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
     users: Mapped["User"] = relationship(back_populates="inventories")
+
+class Expense(Base):
+    __tablename__= 'expenses'
+
+    expense_id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True, nullable=False, autoincrement=True)
+    expense_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    expense_frequency: Mapped[str] = mapped_column(String(256), nullable=False)
+    expense_amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    #TODO can be turned to ISO4217
+    currency: Mapped[str] = mapped_column(String(256), nullable=False)
+
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    users: Mapped["User"] = relationship(back_populates="expenses")
