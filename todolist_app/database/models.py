@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped
-from sqlalchemy import String, Integer, Date
+from sqlalchemy import String, Integer, Date, Float
 from sqlalchemy.orm import mapped_column
 from .connectivity import Base
 from sqlalchemy import Identity
@@ -9,7 +9,9 @@ from sqlalchemy.orm import relationship
 from typing import List
 from datetime import date
 from pydantic_extra_types.currency_code import ISO4217
-
+from dateutil.relativedelta import relativedelta
+#TODO user_id_fk should not be nullable=True in all the tables
+#TODO transform all of this into a SQLscript
 # Password hashing setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -45,6 +47,7 @@ class User(Base):
     todo_items: Mapped[List["TodoItem"]] = relationship(back_populates="users", cascade="all, delete")
     projects: Mapped[List["Project"]] = relationship(back_populates="users", cascade="all, delete")
     owes: Mapped[List["Owe"]] = relationship(back_populates="users", cascade="all, delete")
+    inventories: Mapped[List["Inventory"]] = relationship(back_populates="users", cascade="all, delete")
 
 
     def set_password(self, password):
@@ -76,3 +79,31 @@ class Owe(Base):
     user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
     users: Mapped["User"] = relationship(back_populates="owes")
 
+
+def get_warranty_end_date(context):
+    purchase_date = context.get_current_parameters()['purchase_date']
+    warranty = context.get_current_parameters()['warranty']
+    return purchase_date + relativedelta(years=warranty)
+
+
+class Inventory(Base):
+    __tablename__= 'inventory'
+
+    inventory_id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True, nullable=False, autoincrement=True)
+    inventory_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    
+    cost: Mapped[float] = mapped_column(Float, nullable=False)
+    currency: Mapped[str] = mapped_column(String(256), nullable=False)
+
+    # how to store photos? https://stackoverflow.com/questions/3748/storing-images-in-db-yea-or-nay
+    # could be path to the image, but then the question is - how will the image make it to the filesystem in the first place...
+    photo: Mapped[str] = mapped_column(String(256), nullable=True)
+    receipt: Mapped[str] = mapped_column((String(256)), nullable=True)
+
+    purchase_date: Mapped[date] = mapped_column(Date, nullable=False)
+    warranty: Mapped[int] = mapped_column(Integer, nullable=True) # it seems warranty is always in years
+    # https://stackoverflow.com/questions/36579355/sqlalchemy-set-default-value-of-one-column-to-that-of-another-column
+    warranty_end_date: Mapped[date] = mapped_column(Date, nullable=True, default=get_warranty_end_date)
+    
+    user_id_fk: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=True)
+    users: Mapped["User"] = relationship(back_populates="inventories")
