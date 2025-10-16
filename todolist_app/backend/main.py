@@ -4,16 +4,14 @@ from fastapi import FastAPI
 
 #from database import models
 
-import schemas as schemas
-
-from routers import my_endpoint
+from .routers import todos as todos
 
 #models.Base.metadata.create_all(engine)
 
 tags_metadata = [
     {
-        "name": "something",
-        "description": "placeholder text",
+        "name": "todos",
+        "description": "endpoint related to todo items",
     },
 ]
 
@@ -28,4 +26,4 @@ app = FastAPI(
     openapi_tags=tags_metadata
     )
 
-app.include_router(my_endpoint.router)
+app.include_router(todos.router)

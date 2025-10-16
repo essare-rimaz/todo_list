@@ -4,3 +4,5 @@ from typing import Union
 
 class Testing_schema(BaseModel):
     ID: int
+    NAME: str
+    DESCRIPTION: str
