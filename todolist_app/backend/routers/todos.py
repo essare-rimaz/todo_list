@@ -7,6 +7,8 @@ from ..dependencies import get_db
 from .authentication import get_current_user
 from ...database import models
 from ..schemas.todos import ItemCreate, ItemPatch, ItemCreateResponse
+from ..docs.todos import post_todo_example_1
+from typing import Annotated
 
 router = APIRouter(
     prefix="",
@@ -14,7 +16,7 @@ router = APIRouter(
 
 @router.post("/todos", tags=["todos"], status_code=status.HTTP_201_CREATED, response_model=ItemCreateResponse)
 def post_todo_item(
-    item: ItemCreate, 
+    item: Annotated[ItemCreate, post_todo_example_1], 
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     summary="Create TodoItem"
