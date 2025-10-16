@@ -13,13 +13,13 @@ router = APIRouter(
     prefix="",
 )
 
-@router.get("/users/me")
+@router.get("/users/me", tags=["users"])
 def read_users_me(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     return current_user
 
-@router.post("/users")
+@router.post("/users", tags=["users"], status_code=status.HTTP_201_CREATED)
 def post_user(
     user: UserCreate,
     db: Session = Depends(get_db)
@@ -27,7 +27,7 @@ def post_user(
     existing_user = db.query(models.User).filter(models.User.email==user.email).first()
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Email already registered"
         )
     
@@ -39,7 +39,7 @@ def post_user(
 
     return new_user
 
-@router.delete("/users")
+@router.delete("/users", tags=["users"])
 def delete_user(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
