@@ -59,6 +59,9 @@ cover/
 *.mo
 *.pot
 
+# sqlite stuff
+*.db
+
 # Django stuff:
 *.log
 local_settings.py
