@@ -1,12 +1,12 @@
 from fastapi import Depends, APIRouter, status, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import List
+
 from sqlalchemy.orm import Session
 
-from .. import schemas
-from ..dependencies import get_db, models
-
+from ..dependencies import get_db
+from .authentication import get_current_user
+from ...database import models
 
 router = APIRouter(
     prefix="",
@@ -34,12 +34,13 @@ class ItemCreateResponse(BaseModel):
 def post_todo_item(
     item: ItemCreate, 
     db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
     summary="Create TodoItem"
 ):
     '''
     Create a TodoItem with an optional description
     '''
-    db_item = models.TodoItem(name=item.name, description=item.description)
+    db_item = models.TodoItem(name=item.name, description=item.description, user_id_fk=user.id)
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
@@ -49,12 +50,13 @@ def post_todo_item(
 @router.get("/todos", tags=["todos"], status_code=status.HTTP_200_OK)
 def get_todo_item(
     db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
     summary="Get TodoItems"
 ):
     '''
     Get all TodoItems
     '''
-    all_rows = db.query(models.TodoItem).all()
+    all_rows = db.query(models.TodoItem).filter(models.TodoItem.user_id_fk == user.id).all()
 
     if all_rows == []:
         return JSONResponse(status_code=204, content=None)
@@ -66,6 +68,7 @@ def get_todo_item(
 def delete_todo_item(
     item_id: int,
     db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
     summary="Delete TodoItem"
 ):
     '''
@@ -85,9 +88,13 @@ def patch_todo_item(
     item_id: int,
     item: ItemPatch,
     db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
     summary="Patch TodoItem"
 ):
-    record = db.query(models.TodoItem).filter(models.TodoItem.id == item_id).first()
+    record = db.query(models.TodoItem).filter(
+        models.TodoItem.id == item_id, 
+        models.TodoItem.user_id_fk == user.id
+    ).first()
 
     if not record:
         raise HTTPException(status_code=404, detail="Item not found")
