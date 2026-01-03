@@ -3,7 +3,8 @@ from sqlalchemy import String, Integer, Date, Float
 from sqlalchemy.orm import mapped_column
 from .connectivity import Base
 from sqlalchemy import Identity
-from passlib.context import CryptContext
+#from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from typing import List
@@ -11,7 +12,6 @@ from datetime import date
 from pydantic_extra_types.currency_code import ISO4217
 from dateutil.relativedelta import relativedelta
 # Password hashing setup
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class TodoItem(Base):
@@ -50,7 +50,10 @@ class User(Base):
 
 
     def set_password(self, password):
-        self.hashed_password = pwd_context.hash(password)
+        self.hashed_password = bcrypt.hashpw(
+        bytes(password, encoding="utf-8"),
+        bcrypt.gensalt(),
+    )
 
 class Project(Base):
     __tablename__= 'project'
